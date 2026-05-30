@@ -29,15 +29,14 @@
 }
 
 body{
-    height:100vh;
-    overflow:hidden;
-
     background:linear-gradient(135deg,var(--bg1),var(--bg2));
     color:var(--text);
     font-family:'Trebuchet MS',sans-serif;
+    height:100vh;
+    overflow:hidden;
 }
 
-/* TOP */
+/* TOP BAR */
 
 .top-bar{
     position:fixed;
@@ -55,6 +54,8 @@ body{
     backdrop-filter:blur(10px);
 
     border-bottom:1px solid var(--accent);
+
+    z-index:1000;
 }
 
 .brand h1{
@@ -64,12 +65,17 @@ body{
     -webkit-text-fill-color:transparent;
 }
 
+.brand span{
+    font-size:13px;
+    opacity:.8;
+}
+
 /* MAIN GRID */
 
 .main-layout{
     display:grid;
 
-    grid-template-columns:300px 1fr;
+    grid-template-columns:320px 1fr;
 
     height:100vh;
 
@@ -83,7 +89,7 @@ body{
     overflow:hidden;
 }
 
-/* LEFT */
+/* LEFT PANEL */
 
 .left-panel{
     display:grid;
@@ -104,11 +110,40 @@ body{
     padding:12px;
 }
 
-/* LOG PANEL FIX */
+.card h2{
+    margin-bottom:8px;
+    font-size:16px;
+}
+
+/* BUTTONS */
+
+button{
+    cursor:pointer;
+    border:2px solid var(--accent);
+    background:var(--panel);
+    color:var(--text);
+    border-radius:10px;
+    padding:10px 12px;
+    transition:.2s;
+}
+
+button:hover{
+    border-color:var(--accent2);
+    transform:translateY(-2px);
+}
+
+/* RANGE */
+
+input[type="range"]{
+    width:100%;
+}
+
+/* LOG */
 
 #log{
     height:100%;
-    overflow-y:auto;   /* <-- KEY FIX */
+    overflow:hidden;
+    overflow-y:auto;
 
     font-family:monospace;
 
@@ -120,7 +155,7 @@ body{
     background:rgba(0,0,0,.15);
 }
 
-/* RIGHT */
+/* RIGHT PANEL */
 
 .right-panel{
     display:flex;
@@ -131,8 +166,8 @@ body{
 /* CONTROLS */
 
 .controls{
-    width:80%;   /* <-- YOU WANTED 80% */
-    height:80%;
+    width:90%;
+    height:90%;
 
     display:grid;
 
@@ -141,35 +176,27 @@ body{
         "left stop right"
         ". down .";
 
-    gap:18px;
+    gap:20px;
 }
 
 .controls button{
     width:100%;
     height:100%;
 
-    min-width:110px;
-    min-height:110px;
+    min-width:120px;
+    min-height:120px;
 
     font-size:clamp(40px,5vw,70px);
 
     border:none;
-    border-radius:20px;
+    border-radius:22px;
 
     color:#222;
 
     background:linear-gradient(135deg,var(--accent),var(--accent2));
 
     box-shadow:0 5px 15px rgba(0,0,0,.3);
-
-    transition:.2s;
 }
-
-.controls button:hover{
-    transform:scale(1.06);
-}
-
-/* GRID AREAS */
 
 button[data-dir="up"]{grid-area:up;}
 button[data-dir="left"]{grid-area:left;}
@@ -181,13 +208,18 @@ button[data-dir="stop"]{grid-area:stop;}
 
 @media(max-width:900px){
 
+    body{
+        overflow:auto;
+    }
+
     .main-layout{
         grid-template-columns:1fr;
         grid-template-rows:auto 1fr;
+        height:auto;
     }
 
     .controls{
-        width:95%;
+        width:100%;
         height:400px;
     }
 }
@@ -202,7 +234,7 @@ button[data-dir="stop"]{grid-area:stop;}
         <span>ESP32 Robot Control Center</span>
     </div>
 
-    <button onclick="connectSerial()">Connect</button>
+    <button onclick="connectSerial()">Connect Serial</button>
 </header>
 
 <div class="main-layout">
@@ -212,7 +244,7 @@ button[data-dir="stop"]{grid-area:stop;}
 
         <div class="card">
             <h2>Connection</h2>
-            <button onclick="connectSerial()">ESP32</button>
+            <button onclick="connectSerial()">Connect ESP32</button>
         </div>
 
         <div class="card">
@@ -246,15 +278,15 @@ button[data-dir="stop"]{grid-area:stop;}
 </div>
 
 <script>
-let writer = null;
-let reader = null;
+let serialWriter = null;
+let serialReader = null;
 
-const enc = new TextEncoder();
-const dec = new TextDecoder();
+const encoder = new TextEncoder();
+const decoder = new TextDecoder();
 
 function log(msg){
-    const l = document.getElementById("log");
-    l.innerHTML = msg + "<br>" + l.innerHTML;
+    const el = document.getElementById("log");
+    el.innerHTML = msg + "<br>" + el.innerHTML;
 }
 
 async function connectSerial(){
@@ -262,32 +294,31 @@ async function connectSerial(){
         const port = await navigator.serial.requestPort();
         await port.open({ baudRate:9600 });
 
-        writer = port.writable.getWriter();
-        reader = port.readable.getReader();
+        serialWriter = port.writable.getWriter();
+        serialReader = port.readable.getReader();
 
         log("CONNECTED");
 
         while(true){
-            const { value, done } = await reader.read();
+            const { value, done } = await serialReader.read();
             if(done) break;
             if(value){
-                log(dec.decode(value).trim());
+                log(decoder.decode(value).trim());
             }
         }
-
     }catch(e){
         log("ERROR: " + e);
     }
 }
 
-async function sendCommand(c){
-    if(!writer){
+async function sendCommand(cmd){
+    if(!serialWriter){
         log("NOT CONNECTED");
         return;
     }
 
-    await writer.write(enc.encode(c + "\n"));
-    log("SEND: " + c);
+    await serialWriter.write(encoder.encode(cmd + "\n"));
+    log("SEND: " + cmd);
 }
 </script>
 
