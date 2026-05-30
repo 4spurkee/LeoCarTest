@@ -74,7 +74,6 @@ body{
 
 .main-layout{
     display:grid;
-
     grid-template-columns:320px 1fr;
 
     height:100vh;
@@ -93,12 +92,10 @@ body{
 
 .left-panel{
     display:grid;
-
-    grid-template-rows:auto auto 1fr;
-
+    grid-template-rows:auto auto auto;
     gap:15px;
-
     height:100%;
+    align-content:start;
 }
 
 /* CARDS */
@@ -141,9 +138,9 @@ input[type="range"]{
 /* LOG */
 
 #log{
-    height:100%;
-    overflow:hidden;
-    overflow-y:auto;
+    height:220px;          /* fixed height */
+    max-height:220px;      /* does not exceed this */
+    overflow-y:auto;       /* scroll inside the log only */
 
     font-family:monospace;
 
@@ -207,7 +204,6 @@ button[data-dir="stop"]{grid-area:stop;}
 /* MOBILE */
 
 @media(max-width:900px){
-
     body{
         overflow:auto;
     }
@@ -233,8 +229,6 @@ button[data-dir="stop"]{grid-area:stop;}
         <h1>LEO COMMAND</h1>
         <span>ESP32 Robot Control Center</span>
     </div>
-
-    <button onclick="connectSerial()">Connect Serial</button>
 </header>
 
 <div class="main-layout">
@@ -244,7 +238,7 @@ button[data-dir="stop"]{grid-area:stop;}
 
         <div class="card">
             <h2>Connection</h2>
-            <button onclick="connectSerial()">Connect ESP32</button>
+            <button onclick="connectSerial()">Connect Serial</button>
         </div>
 
         <div class="card">
