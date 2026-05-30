@@ -136,12 +136,12 @@ input[type="range"]{
     width:100%;
 }
 
-/* LOG FIX 🔥 */
+/* LOG FIX */
 
 #log{
-    height:220px;       /* фиксирована висота */
-    max-height:220px;   /* не росте більше */
-    overflow-y:auto;    /* SCROLL ВНУТРІШНІЙ */
+    height:220px;
+    max-height:220px;
+    overflow-y:auto;
 
     font-family:monospace;
 
@@ -202,12 +202,8 @@ button[data-dir="right"]{grid-area:right;}
 button[data-dir="down"]{grid-area:down;}
 button[data-dir="stop"]{grid-area:stop;}
 
-/* MOBILE */
-
 @media(max-width:900px){
-    body{
-        overflow:auto;
-    }
+    body{overflow:auto;}
 
     .main-layout{
         grid-template-columns:1fr;
@@ -234,7 +230,6 @@ button[data-dir="stop"]{grid-area:stop;}
 
 <div class="main-layout">
 
-    <!-- LEFT -->
     <div class="left-panel">
 
         <div class="card">
@@ -255,16 +250,15 @@ button[data-dir="stop"]{grid-area:stop;}
 
     </div>
 
-    <!-- RIGHT -->
     <div class="right-panel">
 
         <div class="controls">
 
-            <button data-dir="up" onclick="sendCommand('F')">↑</button>
-            <button data-dir="left" onclick="sendCommand('L')">←</button>
+            <button data-dir="up">↑</button>
+            <button data-dir="left">←</button>
             <button data-dir="stop" onclick="sendCommand('S')">■</button>
-            <button data-dir="right" onclick="sendCommand('R')">→</button>
-            <button data-dir="down" onclick="sendCommand('B')">↓</button>
+            <button data-dir="right">→</button>
+            <button data-dir="down">↓</button>
 
         </div>
 
@@ -279,11 +273,13 @@ let serialReader = null;
 const encoder = new TextEncoder();
 const decoder = new TextDecoder();
 
+/* LOG */
 function log(msg){
     const el = document.getElementById("log");
     el.innerHTML = msg + "<br>" + el.innerHTML;
 }
 
+/* SERIAL */
 async function connectSerial(){
     try{
         const port = await navigator.serial.requestPort();
@@ -301,11 +297,13 @@ async function connectSerial(){
                 log(decoder.decode(value).trim());
             }
         }
+
     }catch(e){
         log("ERROR: " + e);
     }
 }
 
+/* SEND */
 async function sendCommand(cmd){
     if(!serialWriter){
         log("NOT CONNECTED");
@@ -315,6 +313,37 @@ async function sendCommand(cmd){
     await serialWriter.write(encoder.encode(cmd + "\n"));
     log("SEND: " + cmd);
 }
+
+/* HOLD CONTROL SYSTEM */
+function bindHold(btn, cmd){
+
+    const start = (e) => {
+        e.preventDefault();
+        sendCommand(cmd);
+    };
+
+    const stop = (e) => {
+        e.preventDefault();
+        sendCommand("S");
+    };
+
+    btn.addEventListener("mousedown", start);
+    btn.addEventListener("mouseup", stop);
+    btn.addEventListener("mouseleave", stop);
+
+    btn.addEventListener("touchstart", start, { passive:false });
+    btn.addEventListener("touchend", stop);
+}
+
+/* INIT */
+window.addEventListener("DOMContentLoaded", () => {
+
+    bindHold(document.querySelector('[data-dir="up"]'), "F");
+    bindHold(document.querySelector('[data-dir="left"]'), "L");
+    bindHold(document.querySelector('[data-dir="right"]'), "R");
+    bindHold(document.querySelector('[data-dir="down"]'), "B");
+
+});
 </script>
 
 </body>
