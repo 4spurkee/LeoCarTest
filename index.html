@@ -36,6 +36,8 @@ body{
     overflow:hidden;
 }
 
+/* TOP BAR */
+
 .top-bar{
     position:fixed;
     top:0;
@@ -68,9 +70,12 @@ body{
     opacity:.8;
 }
 
+/* MAIN GRID */
+
 .main-layout{
     display:grid;
     grid-template-columns:320px 1fr;
+
     height:100vh;
 
     padding-top:95px;
@@ -79,14 +84,22 @@ body{
     padding-bottom:15px;
 
     gap:15px;
+
+    overflow:hidden;
 }
+
+/* LEFT PANEL */
 
 .left-panel{
     display:grid;
-    grid-template-rows:auto auto 1fr;
+    grid-template-rows:auto auto auto;
+
     gap:15px;
     height:100%;
+    align-content:center;
 }
+
+/* CARDS */
 
 .card{
     background:linear-gradient(135deg,var(--panel2),var(--panel));
@@ -99,6 +112,8 @@ body{
     margin-bottom:8px;
     font-size:16px;
 }
+
+/* BUTTONS */
 
 button{
     cursor:pointer;
@@ -115,25 +130,38 @@ button:hover{
     transform:translateY(-2px);
 }
 
+/* RANGE */
+
 input[type="range"]{
     width:100%;
 }
 
+/* LOG FIX 🔥 */
+
 #log{
-    height:100%;
-    overflow-y:auto;
+    height:220px;       /* фиксирована висота */
+    max-height:220px;   /* не росте більше */
+    overflow-y:auto;    /* SCROLL ВНУТРІШНІЙ */
+
     font-family:monospace;
+
     border:1px solid var(--accent);
     border-radius:10px;
+
     padding:10px;
+
     background:rgba(0,0,0,.15);
 }
+
+/* RIGHT PANEL */
 
 .right-panel{
     display:flex;
     justify-content:center;
     align-items:center;
 }
+
+/* CONTROLS */
 
 .controls{
     width:90%;
@@ -164,6 +192,7 @@ input[type="range"]{
     color:#222;
 
     background:linear-gradient(135deg,var(--accent),var(--accent2));
+
     box-shadow:0 5px 15px rgba(0,0,0,.3);
 }
 
@@ -173,11 +202,16 @@ button[data-dir="right"]{grid-area:right;}
 button[data-dir="down"]{grid-area:down;}
 button[data-dir="stop"]{grid-area:stop;}
 
+/* MOBILE */
+
 @media(max-width:900px){
-    body{overflow:auto;}
+    body{
+        overflow:auto;
+    }
 
     .main-layout{
         grid-template-columns:1fr;
+        grid-template-rows:auto 1fr;
         height:auto;
     }
 
@@ -196,17 +230,16 @@ button[data-dir="stop"]{grid-area:stop;}
         <h1>LEO COMMAND</h1>
         <span>ESP32 Robot Control Center</span>
     </div>
-
-    <button onclick="connectSerial()">Connect Serial</button>
 </header>
 
 <div class="main-layout">
 
+    <!-- LEFT -->
     <div class="left-panel">
 
         <div class="card">
             <h2>Connection</h2>
-            <button onclick="connectSerial()">Connect ESP32</button>
+            <button onclick="connectSerial()">Connect Serial</button>
         </div>
 
         <div class="card">
@@ -222,50 +255,16 @@ button[data-dir="stop"]{grid-area:stop;}
 
     </div>
 
+    <!-- RIGHT -->
     <div class="right-panel">
 
         <div class="controls">
 
-            <button data-dir="up"
-                onmousedown="holdStart('F')"
-                onmouseup="holdStop()"
-                onmouseleave="holdStop()"
-                ontouchstart="holdStart('F')"
-                ontouchend="holdStop()">
-                ↑
-            </button>
-
-            <button data-dir="left"
-                onmousedown="holdStart('L')"
-                onmouseup="holdStop()"
-                onmouseleave="holdStop()"
-                ontouchstart="holdStart('L')"
-                ontouchend="holdStop()">
-                ←
-            </button>
-
-            <button data-dir="stop"
-                onclick="sendCommand('S')">
-                ■
-            </button>
-
-            <button data-dir="right"
-                onmousedown="holdStart('R')"
-                onmouseup="holdStop()"
-                onmouseleave="holdStop()"
-                ontouchstart="holdStart('R')"
-                ontouchend="holdStop()">
-                →
-            </button>
-
-            <button data-dir="down"
-                onmousedown="holdStart('B')"
-                onmouseup="holdStop()"
-                onmouseleave="holdStop()"
-                ontouchstart="holdStart('B')"
-                ontouchend="holdStop()">
-                ↓
-            </button>
+            <button data-dir="up" onclick="sendCommand('F')">↑</button>
+            <button data-dir="left" onclick="sendCommand('L')">←</button>
+            <button data-dir="stop" onclick="sendCommand('S')">■</button>
+            <button data-dir="right" onclick="sendCommand('R')">→</button>
+            <button data-dir="down" onclick="sendCommand('B')">↓</button>
 
         </div>
 
@@ -274,21 +273,16 @@ button[data-dir="stop"]{grid-area:stop;}
 </div>
 
 <script>
-
 let serialWriter = null;
 let serialReader = null;
 
 const encoder = new TextEncoder();
 const decoder = new TextDecoder();
 
-/* LOG */
-
 function log(msg){
     const el = document.getElementById("log");
     el.innerHTML = msg + "<br>" + el.innerHTML;
 }
-
-/* SERIAL */
 
 async function connectSerial(){
     try{
@@ -307,13 +301,10 @@ async function connectSerial(){
                 log(decoder.decode(value).trim());
             }
         }
-
     }catch(e){
         log("ERROR: " + e);
     }
 }
-
-/* SEND */
 
 async function sendCommand(cmd){
     if(!serialWriter){
@@ -324,38 +315,6 @@ async function sendCommand(cmd){
     await serialWriter.write(encoder.encode(cmd + "\n"));
     log("SEND: " + cmd);
 }
-
-/* HOLD SYSTEM (FIXED) */
-
-let holdInterval = null;
-
-function holdStart(cmd){
-    sendCommand(cmd);
-
-    holdInterval = setInterval(()=>{
-        sendCommand(cmd);
-    }, 150);
-}
-
-function holdStop(){
-    clearInterval(holdInterval);
-    holdInterval = null;
-
-    sendCommand("S");
-}
-
-/* KEYBOARD */
-
-document.addEventListener("keydown", e=>{
-    switch(e.key){
-        case "ArrowUp": sendCommand("F"); break;
-        case "ArrowDown": sendCommand("B"); break;
-        case "ArrowLeft": sendCommand("L"); break;
-        case "ArrowRight": sendCommand("R"); break;
-        case " ": case "Enter": sendCommand("S"); break;
-    }
-});
-
 </script>
 
 </body>
